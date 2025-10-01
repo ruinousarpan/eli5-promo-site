@@ -10,6 +10,7 @@ const Navbar = () => {
   const navLinks = [
     { to: "/", label: "Home" },
     { to: "/features", label: "Features" },
+    { to: "/questions", label: "Questions" },
     { to: "/blog", label: "Blog" },
     { to: "/faq", label: "FAQ" },
     { to: "/contact", label: "Contact" },
