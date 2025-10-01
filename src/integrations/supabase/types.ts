@@ -14,7 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      questions: {
+        Row: {
+          body_answer: string | null
+          body_question: string | null
+          created_at: string | null
+          id: string
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          source_url: string
+          summary: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          body_answer?: string | null
+          body_question?: string | null
+          created_at?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          source_url: string
+          summary?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          body_answer?: string | null
+          body_question?: string | null
+          created_at?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          source_url?: string
+          summary?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
