@@ -11,12 +11,12 @@ function parseListFromHtml(html: string): { slug: string; title: string }[] {
   if (!doc) return [];
   
   const out: { slug: string; title: string }[] = [];
-  const links = doc.querySelectorAll('a[href*="/questions/"]');
+  const links = doc.querySelectorAll('a[href*="/qna/"]');
   
   links.forEach((node) => {
     const el = node as Element;
     const href = el.getAttribute('href') || '';
-    const match = href.match(/\/questions\/([^/?#]+)/);
+    const match = href.match(/\/qna\/([^/?#]+)/);
     if (!match) return;
     
     const slug = match[1];
@@ -124,7 +124,7 @@ Deno.serve(async (req) => {
       }
 
       try {
-        const detailUrl = `${base}/questions/${slug}`;
+        const detailUrl = `${base}/qna/${slug}`;
         console.log(`Fetching detail: ${slug}`);
         
         const detailResponse = await fetch(detailUrl);
