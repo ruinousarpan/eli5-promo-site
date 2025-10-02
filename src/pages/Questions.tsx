@@ -44,6 +44,29 @@ export default function Questions() {
         .limit(200);
 
       if (error) throw error;
+      
+      // If no questions found, trigger initial sync
+      if (!data || data.length === 0) {
+        console.log("No questions found, triggering initial sync...");
+        const { error: syncError } = await supabase.functions.invoke("sync-eli5");
+        
+        if (syncError) {
+          console.error("Sync error:", syncError);
+        } else {
+          // Retry fetching after sync
+          const { data: newData } = await supabase
+            .from("questions")
+            .select("id, slug, title, summary, updated_at")
+            .order("updated_at", { ascending: false })
+            .limit(200);
+          
+          setQuestions(newData || []);
+          setFilteredQuestions(newData || []);
+          setLoading(false);
+          return;
+        }
+      }
+      
       setQuestions(data || []);
       setFilteredQuestions(data || []);
     } catch (error) {
