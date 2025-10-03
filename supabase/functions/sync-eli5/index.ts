@@ -7,24 +7,31 @@ const corsHeaders = {
 };
 
 function parseListFromHtml(html: string): { slug: string; title: string }[] {
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  if (!doc) return [];
-  
   const out: { slug: string; title: string }[] = [];
-  // Look for all anchor tags
-  const links = doc.querySelectorAll('a');
   
-  links.forEach((node) => {
-    const el = node as Element;
-    const href = el.getAttribute('href') || '';
-    // Match both relative and absolute URLs with /qna/
-    const match = href.match(/(?:https?:\/\/[^/]+)?\/qna\/([^/?#]+)/);
-    if (!match) return;
-    
-    const slug = match[1];
-    const title = el.textContent?.trim() || slug.replace(/[-_]/g, ' ');
-    out.push({ slug, title });
-  });
+  // Use regex to find all href links containing /qna/
+  const hrefRegex = /href="([^"]*\/qna\/([^"/?#]+)[^"]*)"/g;
+  let match;
+  
+  while ((match = hrefRegex.exec(html)) !== null) {
+    const slug = match[2];
+    if (slug) {
+      // Try to find the title text near this link
+      const linkStart = match.index;
+      const linkEnd = html.indexOf('</a>', linkStart);
+      let title = slug.replace(/[-_]/g, ' ');
+      
+      if (linkEnd > linkStart) {
+        const linkContent = html.substring(linkStart, linkEnd);
+        const textMatch = linkContent.match(/>([^<]+)</);
+        if (textMatch && textMatch[1].trim()) {
+          title = textMatch[1].trim();
+        }
+      }
+      
+      out.push({ slug, title });
+    }
+  }
   
   // Deduplicate
   const seen = new Set<string>();
