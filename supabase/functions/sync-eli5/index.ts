@@ -11,12 +11,14 @@ function parseListFromHtml(html: string): { slug: string; title: string }[] {
   if (!doc) return [];
   
   const out: { slug: string; title: string }[] = [];
-  const links = doc.querySelectorAll('a[href*="/qna/"]');
+  // Look for all anchor tags
+  const links = doc.querySelectorAll('a');
   
   links.forEach((node) => {
     const el = node as Element;
     const href = el.getAttribute('href') || '';
-    const match = href.match(/\/qna\/([^/?#]+)/);
+    // Match both relative and absolute URLs with /qna/
+    const match = href.match(/(?:https?:\/\/[^/]+)?\/qna\/([^/?#]+)/);
     if (!match) return;
     
     const slug = match[1];
