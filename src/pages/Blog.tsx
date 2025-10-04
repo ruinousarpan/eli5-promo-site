@@ -3,66 +3,23 @@ import { Button } from "@/components/ui/button";
 import SEO from "@/components/SEO";
 import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Blog = () => {
-  const posts = [
-    {
-      slug: "what-made-big-bang",
-      title: "What made the big bang?",
-      excerpt: "The Big Bang is the leading scientific theory for the origin of the universe, but it's important to note that it doesn't explain what caused the Big Bang itself...",
-      date: "2025-10-03",
-      author: "ELI5 Team",
-      category: "General"
-    },
-    {
-      slug: "explique-moi-comment-se-forme-un",
-      title: "How does a rainbow form?",
-      excerpt: "A rainbow appears when a ray of sunlight is refracted (deflected), reflected and dispersed in water droplets...",
-      date: "2025-10-02",
-      author: "ELI5 Team",
-      category: "Science"
-    },
-    {
-      slug: "explique-moi-les-surprimes",
-      title: "Understanding Insurance Surcharges",
-      excerpt: "Surcharges are supplements added to a basic insurance premium when an additional risk is identified by the insurer...",
-      date: "2025-10-02",
-      author: "ELI5 Team",
-      category: "Money & Finance"
-    },
-    {
-      slug: "what-one-piece-advice-often-shared",
-      title: "Leadership Advice: Listen More Than Speak",
-      excerpt: "One piece of advice I always share is that authentic leadership starts with listening more than speaking. Focus on understanding others deeply before guiding them...",
-      date: "2025-10-02",
-      author: "ELI5 Team",
-      category: "General"
-    },
-    {
-      slug: "why-people-still-read-fiction-todays-2",
-      title: "Why Do People Still Read Fiction in Today's Busy World?",
-      excerpt: "People still read fiction in today's busy world because it offers a unique blend of escapism, emotional connection, and intellectual stimulation...",
-      date: "2025-10-02",
-      author: "ELI5 Team",
-      category: "General"
-    },
-    {
-      slug: "what-ip-address",
-      title: "What is my IP address?",
-      excerpt: "An IP address is a unique identifier assigned to each device connected to a network, allowing it to communicate with other devices...",
-      date: "2025-10-01",
-      author: "ELI5 Team",
-      category: "General"
-    },
-    {
-      slug: "explain-kindergartener-what-friction-how-relate",
-      title: "Explaining Friction to a Kindergartener",
-      excerpt: "Friction is the force that makes things slow down when they rub against each other. It relates to Newton's laws by showing how forces affect motion...",
-      date: "2025-10-01",
-      author: "ELI5 Team",
-      category: "Physics"
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['questions'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('questions')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
     }
-  ];
+  });
 
   return (
     <>
@@ -86,43 +43,53 @@ const Blog = () => {
 
         <section className="py-20 px-4">
           <div className="container mx-auto max-w-4xl">
-            <div className="grid gap-8">
-              {posts.map((post) => (
-                <Card key={post.slug} className="group hover:shadow-xl transition-all duration-300">
-                  <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
-                        {post.category}
-                      </span>
-                    </div>
-                    <h2 className="text-2xl font-bold mb-3">
-                      <Link
-                        to={`/blog/${post.slug}`}
-                        className="hover:text-primary transition-colors"
-                      >
-                        {post.title}
-                      </Link>
-                    </h2>
-                    <p className="text-muted-foreground mb-4">{post.excerpt}</p>
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                      <Calendar className="w-4 h-4" />
-                      <time dateTime={post.date}>
-                        {new Date(post.date).toLocaleDateString('en-US', {
-                          year: 'numeric',
-                          month: 'long',
-                          day: 'numeric',
-                        })}
-                      </time>
-                      <span>•</span>
-                      <span>{post.author}</span>
-                    </div>
-                    <Button variant="link" asChild className="px-0">
-                      <Link to={`/blog/${post.slug}`}>Read more →</Link>
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {isLoading ? (
+              <div className="grid gap-8">
+                {[1, 2, 3].map((i) => (
+                  <Card key={i}>
+                    <CardContent className="pt-6">
+                      <Skeleton className="h-6 w-32 mb-3" />
+                      <Skeleton className="h-8 w-3/4 mb-3" />
+                      <Skeleton className="h-20 w-full mb-4" />
+                      <Skeleton className="h-4 w-48" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="grid gap-8">
+                {posts?.map((post) => (
+                  <Card key={post.slug} className="group hover:shadow-xl transition-all duration-300">
+                    <CardContent className="pt-6">
+                      <h2 className="text-2xl font-bold mb-3">
+                        <Link
+                          to={`/blog/${post.slug}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {post.title}
+                        </Link>
+                      </h2>
+                      <p className="text-muted-foreground mb-4 line-clamp-2">{post.summary}</p>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                        <Calendar className="w-4 h-4" />
+                        <time dateTime={post.created_at}>
+                          {new Date(post.created_at).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </time>
+                        <span>•</span>
+                        <span>ELI5 Team</span>
+                      </div>
+                      <Button variant="link" asChild className="px-0">
+                        <Link to={`/blog/${post.slug}`}>Read more →</Link>
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
 
             <div className="mt-12 text-center">
               <p className="text-muted-foreground">
