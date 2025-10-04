@@ -9,12 +9,20 @@ const corsHeaders = {
 function parseListFromHtml(html: string): { slug: string; title: string }[] {
   const out: { slug: string; title: string }[] = [];
   
+  console.log(`HTML length: ${html.length} characters`);
+  console.log(`HTML preview (first 500 chars):`, html.substring(0, 500));
+  
   // Use regex to find all href links containing /qna/
-  const hrefRegex = /href="([^"]*\/qna\/([^"/?#]+)[^"]*)"/g;
+  const hrefRegex = /href="([^"]*\/qna\/([^"/?#]+))"/g;
   let match;
+  let matchCount = 0;
   
   while ((match = hrefRegex.exec(html)) !== null) {
+    matchCount++;
+    const fullUrl = match[1];
     const slug = match[2];
+    console.log(`Found match ${matchCount}: slug="${slug}", url="${fullUrl}"`);
+    
     if (slug) {
       // Try to find the title text near this link
       const linkStart = match.index;
@@ -29,9 +37,12 @@ function parseListFromHtml(html: string): { slug: string; title: string }[] {
         }
       }
       
+      console.log(`Adding question: slug="${slug}", title="${title}"`);
       out.push({ slug, title });
     }
   }
+  
+  console.log(`Total matches found: ${matchCount}`);
   
   // Deduplicate
   const seen = new Set<string>();
