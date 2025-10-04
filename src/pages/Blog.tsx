@@ -5,29 +5,63 @@ import { Link } from "react-router-dom";
 import { Calendar } from "lucide-react";
 
 const Blog = () => {
-  // Placeholder blog posts - in a real app, this would come from a CMS or markdown files
   const posts = [
     {
-      slug: "welcome-to-eli5",
-      title: "Welcome to ELI5: Making Learning Simple",
-      excerpt: "Learn about our mission to make complex topics accessible to everyone through simple, clear explanations.",
-      date: "2024-01-15",
+      slug: "what-made-big-bang",
+      title: "What made the big bang?",
+      excerpt: "The Big Bang is the leading scientific theory for the origin of the universe, but it's important to note that it doesn't explain what caused the Big Bang itself...",
+      date: "2025-10-03",
       author: "ELI5 Team",
+      category: "General"
     },
     {
-      slug: "how-eli5-works",
-      title: "How ELI5 Breaks Down Complex Topics",
-      excerpt: "Discover the methodology behind our explanations and how we transform complex concepts into simple language.",
-      date: "2024-01-10",
+      slug: "explique-moi-comment-se-forme-un",
+      title: "How does a rainbow form?",
+      excerpt: "A rainbow appears when a ray of sunlight is refracted (deflected), reflected and dispersed in water droplets...",
+      date: "2025-10-02",
       author: "ELI5 Team",
+      category: "Science"
     },
     {
-      slug: "tips-for-learning",
-      title: "5 Tips for Effective Learning with ELI5",
-      excerpt: "Get the most out of ELI5 with these simple strategies for better understanding and retention.",
-      date: "2024-01-05",
+      slug: "explique-moi-les-surprimes",
+      title: "Understanding Insurance Surcharges",
+      excerpt: "Surcharges are supplements added to a basic insurance premium when an additional risk is identified by the insurer...",
+      date: "2025-10-02",
       author: "ELI5 Team",
+      category: "Money & Finance"
     },
+    {
+      slug: "what-one-piece-advice-often-shared",
+      title: "Leadership Advice: Listen More Than Speak",
+      excerpt: "One piece of advice I always share is that authentic leadership starts with listening more than speaking. Focus on understanding others deeply before guiding them...",
+      date: "2025-10-02",
+      author: "ELI5 Team",
+      category: "General"
+    },
+    {
+      slug: "why-people-still-read-fiction-todays-2",
+      title: "Why Do People Still Read Fiction in Today's Busy World?",
+      excerpt: "People still read fiction in today's busy world because it offers a unique blend of escapism, emotional connection, and intellectual stimulation...",
+      date: "2025-10-02",
+      author: "ELI5 Team",
+      category: "General"
+    },
+    {
+      slug: "what-ip-address",
+      title: "What is my IP address?",
+      excerpt: "An IP address is a unique identifier assigned to each device connected to a network, allowing it to communicate with other devices...",
+      date: "2025-10-01",
+      author: "ELI5 Team",
+      category: "General"
+    },
+    {
+      slug: "explain-kindergartener-what-friction-how-relate",
+      title: "Explaining Friction to a Kindergartener",
+      excerpt: "Friction is the force that makes things slow down when they rub against each other. It relates to Newton's laws by showing how forces affect motion...",
+      date: "2025-10-01",
+      author: "ELI5 Team",
+      category: "Physics"
+    }
   ];
 
   return (
@@ -54,9 +88,23 @@ const Blog = () => {
           <div className="container mx-auto max-w-4xl">
             <div className="grid gap-8">
               {posts.map((post) => (
-                <Card key={post.slug}>
+                <Card key={post.slug} className="group hover:shadow-xl transition-all duration-300">
                   <CardContent className="pt-6">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-3">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-primary/10 text-primary">
+                        {post.category}
+                      </span>
+                    </div>
+                    <h2 className="text-2xl font-bold mb-3">
+                      <Link
+                        to={`/blog/${post.slug}`}
+                        className="hover:text-primary transition-colors"
+                      >
+                        {post.title}
+                      </Link>
+                    </h2>
+                    <p className="text-muted-foreground mb-4">{post.excerpt}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
                       <Calendar className="w-4 h-4" />
                       <time dateTime={post.date}>
                         {new Date(post.date).toLocaleDateString('en-US', {
@@ -68,15 +116,6 @@ const Blog = () => {
                       <span>•</span>
                       <span>{post.author}</span>
                     </div>
-                    <h2 className="text-2xl font-bold mb-3">
-                      <Link
-                        to={`/blog/${post.slug}`}
-                        className="hover:text-primary transition-colors"
-                      >
-                        {post.title}
-                      </Link>
-                    </h2>
-                    <p className="text-muted-foreground mb-4">{post.excerpt}</p>
                     <Button variant="link" asChild className="px-0">
                       <Link to={`/blog/${post.slug}`}>Read more →</Link>
                     </Button>
