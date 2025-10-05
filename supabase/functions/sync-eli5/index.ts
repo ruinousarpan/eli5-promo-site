@@ -153,7 +153,7 @@ Deno.serve(async (req) => {
         const detailHtml = await detailResponse.text();
         const detail = parseDetailFromHtml(detailHtml);
         
-        if (!detail?.title) {
+        if (!detail) {
           console.error(`Failed to parse ${slug}`);
           skipped++;
           continue;
@@ -168,13 +168,14 @@ Deno.serve(async (req) => {
           .eq('slug', slug)
           .maybeSingle();
 
+        // Use the title from RSS feed (item.title), not the scraped page title
         const questionData = {
           slug,
-          title: detail.seo_title || detail.title,
+          title: item.title, // Use RSS title which has the actual question
           body_question: detail.body_question || null,
           body_answer: detail.body_answer || null,
           summary: detail.summary || null,
-          seo_title: detail.seo_title || null,
+          seo_title: item.title, // Use RSS title for SEO too
           seo_description: detail.seo_description || null,
           source_url: sourceUrl,
         };
