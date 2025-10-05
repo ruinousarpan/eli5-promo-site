@@ -2,8 +2,10 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Search } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import SEO from "@/components/SEO";
 
 interface Question {
@@ -19,6 +21,8 @@ export default function Questions() {
   const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchQuestions();
@@ -34,6 +38,37 @@ export default function Questions() {
       setFilteredQuestions(questions);
     }
   }, [searchTerm, questions]);
+
+  const syncQuestions = async () => {
+    setSyncing(true);
+    try {
+      toast({
+        title: "Syncing questions...",
+        description: "Fetching latest questions from RSS feed",
+      });
+
+      const { data, error } = await supabase.functions.invoke("sync-eli5");
+      
+      if (error) throw error;
+      
+      toast({
+        title: "Sync complete!",
+        description: `Updated questions successfully`,
+      });
+      
+      // Refresh the questions list
+      await fetchQuestions();
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast({
+        title: "Sync failed",
+        description: "Could not sync questions. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const fetchQuestions = async () => {
     try {
@@ -87,10 +122,23 @@ export default function Questions() {
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
         <main className="container mx-auto px-4 py-16">
           <div className="max-w-4xl mx-auto">
-            <h1 className="text-4xl font-bold mb-4">Browse Questions</h1>
-            <p className="text-muted-foreground mb-8">
-              Explore complex topics explained in simple terms
-            </p>
+            <div className="flex justify-between items-start mb-8">
+              <div>
+                <h1 className="text-4xl font-bold mb-4">Browse Questions</h1>
+                <p className="text-muted-foreground">
+                  Explore complex topics explained in simple terms
+                </p>
+              </div>
+              <Button
+                onClick={syncQuestions}
+                disabled={syncing}
+                variant="outline"
+                size="sm"
+              >
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing...' : 'Sync Now'}
+              </Button>
+            </div>
 
             <div className="relative mb-8">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
