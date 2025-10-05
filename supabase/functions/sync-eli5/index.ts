@@ -6,43 +6,39 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function parseListFromHtml(html: string): { slug: string; title: string }[] {
+function parseListFromRss(xml: string): { slug: string; title: string }[] {
   const out: { slug: string; title: string }[] = [];
   
-  console.log(`HTML length: ${html.length} characters`);
-  console.log(`HTML preview (first 500 chars):`, html.substring(0, 500));
+  console.log(`RSS XML length: ${xml.length} characters`);
   
-  // Use regex to find all href links containing /qna/
-  const hrefRegex = /href="([^"]*\/qna\/([^"/?#]+))"/g;
-  let match;
-  let matchCount = 0;
+  // Parse RSS XML to extract items
+  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+  let itemMatch;
+  let itemCount = 0;
   
-  while ((match = hrefRegex.exec(html)) !== null) {
-    matchCount++;
-    const fullUrl = match[1];
-    const slug = match[2];
-    console.log(`Found match ${matchCount}: slug="${slug}", url="${fullUrl}"`);
+  while ((itemMatch = itemRegex.exec(xml)) !== null) {
+    itemCount++;
+    const itemContent = itemMatch[1];
     
-    if (slug) {
-      // Try to find the title text near this link
-      const linkStart = match.index;
-      const linkEnd = html.indexOf('</a>', linkStart);
-      let title = slug.replace(/[-_]/g, ' ');
-      
-      if (linkEnd > linkStart) {
-        const linkContent = html.substring(linkStart, linkEnd);
-        const textMatch = linkContent.match(/>([^<]+)</);
-        if (textMatch && textMatch[1].trim()) {
-          title = textMatch[1].trim();
-        }
-      }
-      
-      console.log(`Adding question: slug="${slug}", title="${title}"`);
+    // Extract title from CDATA
+    const titleMatch = itemContent.match(/<title>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/title>/s);
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    
+    // Extract link
+    const linkMatch = itemContent.match(/<link>(.*?)<\/link>/);
+    const link = linkMatch ? linkMatch[1].trim() : '';
+    
+    // Extract slug from link (e.g., https://eli5.space/qna/slug-here)
+    const slugMatch = link.match(/\/qna\/([^/?#]+)/);
+    const slug = slugMatch ? slugMatch[1] : '';
+    
+    if (slug && title) {
+      console.log(`Found RSS item ${itemCount}: slug="${slug}", title="${title.substring(0, 80)}..."`);
       out.push({ slug, title });
     }
   }
   
-  console.log(`Total matches found: ${matchCount}`);
+  console.log(`Total RSS items found: ${itemCount}`);
   
   // Deduplicate
   const seen = new Set<string>();
@@ -115,21 +111,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting ELI5 HTML scrape sync...');
+    console.log('Starting ELI5 RSS feed sync...');
     const base = 'https://eli5.space';
     
-    // 1. Fetch listing page HTML
-    const listUrl = `${base}/questions`;
-    console.log('Fetching listing from:', listUrl);
+    // 1. Fetch RSS feed
+    const rssUrl = 'https://rss.app/feeds/4EE4ewhvUq1830DQ.xml';
+    console.log('Fetching RSS feed from:', rssUrl);
     
-    const listResponse = await fetch(listUrl);
-    if (!listResponse.ok) {
-      throw new Error(`Failed to fetch listing: ${listResponse.status}`);
+    const rssResponse = await fetch(rssUrl);
+    if (!rssResponse.ok) {
+      throw new Error(`Failed to fetch RSS feed: ${rssResponse.status}`);
     }
 
-    const listHtml = await listResponse.text();
-    const list = parseListFromHtml(listHtml);
-    console.log(`Found ${list.length} question links`);
+    const rssXml = await rssResponse.text();
+    const list = parseListFromRss(rssXml);
+    console.log(`Found ${list.length} question links from RSS feed`);
 
     let added = 0;
     let updated = 0;
