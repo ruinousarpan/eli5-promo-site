@@ -6,39 +6,38 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-function parseListFromRss(xml: string): { slug: string; title: string }[] {
+function parseListFromHtml(html: string): { slug: string; title: string }[] {
   const out: { slug: string; title: string }[] = [];
   
-  console.log(`RSS XML length: ${xml.length} characters`);
+  console.log(`HTML length: ${html.length} characters`);
   
-  // Parse RSS XML to extract items
-  const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-  let itemMatch;
-  let itemCount = 0;
-  
-  while ((itemMatch = itemRegex.exec(xml)) !== null) {
-    itemCount++;
-    const itemContent = itemMatch[1];
-    
-    // Extract title from CDATA
-    const titleMatch = itemContent.match(/<title>\s*<!\[CDATA\[(.*?)\]\]>\s*<\/title>/s);
-    const title = titleMatch ? titleMatch[1].trim() : '';
-    
-    // Extract link
-    const linkMatch = itemContent.match(/<link>(.*?)<\/link>/);
-    const link = linkMatch ? linkMatch[1].trim() : '';
-    
-    // Extract slug from link (e.g., https://eli5.space/qna/slug-here)
-    const slugMatch = link.match(/\/qna\/([^/?#]+)/);
-    const slug = slugMatch ? slugMatch[1] : '';
-    
-    if (slug && title) {
-      console.log(`Found RSS item ${itemCount}: slug="${slug}", title="${title.substring(0, 80)}..."`);
-      out.push({ slug, title });
-    }
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  if (!doc) {
+    console.error('Failed to parse HTML document');
+    return out;
   }
   
-  console.log(`Total RSS items found: ${itemCount}`);
+  // Find all question links on the /questions page
+  const links = doc.querySelectorAll('a[href*="/qna/"]');
+  console.log(`Found ${links.length} question links`);
+  
+  links.forEach((link, index) => {
+    const href = (link as Element).getAttribute('href');
+    const title = (link as Element).textContent?.trim() || '';
+    
+    if (href && title) {
+      // Extract slug from href (e.g., /qna/slug-here)
+      const slugMatch = href.match(/\/qna\/([^/?#]+)/);
+      const slug = slugMatch ? slugMatch[1] : '';
+      
+      if (slug) {
+        console.log(`Found question ${index + 1}: slug="${slug}", title="${title.substring(0, 80)}..."`);
+        out.push({ slug, title });
+      }
+    }
+  });
+  
+  console.log(`Total questions found: ${out.length}`);
   
   // Deduplicate
   const seen = new Set<string>();
@@ -111,21 +110,21 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    console.log('Starting ELI5 RSS feed sync...');
+    console.log('Starting ELI5 questions page sync...');
     const base = 'https://eli5.space';
     
-    // 1. Fetch RSS feed
-    const rssUrl = 'https://rss.app/feeds/4EE4ewhvUq1830DQ.xml';
-    console.log('Fetching RSS feed from:', rssUrl);
+    // 1. Fetch questions page
+    const questionsUrl = `${base}/questions`;
+    console.log('Fetching questions page from:', questionsUrl);
     
-    const rssResponse = await fetch(rssUrl);
-    if (!rssResponse.ok) {
-      throw new Error(`Failed to fetch RSS feed: ${rssResponse.status}`);
+    const questionsResponse = await fetch(questionsUrl);
+    if (!questionsResponse.ok) {
+      throw new Error(`Failed to fetch questions page: ${questionsResponse.status}`);
     }
 
-    const rssXml = await rssResponse.text();
-    const list = parseListFromRss(rssXml);
-    console.log(`Found ${list.length} question links from RSS feed`);
+    const questionsHtml = await questionsResponse.text();
+    const list = parseListFromHtml(questionsHtml);
+    console.log(`Found ${list.length} question links from questions page`);
 
     let added = 0;
     let updated = 0;
