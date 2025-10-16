@@ -167,14 +167,14 @@ Deno.serve(async (req) => {
           .eq('slug', slug)
           .maybeSingle();
 
-        // Use the title from RSS feed (item.title), not the scraped page title
+        // Use the title from the questions page (item.title), not the scraped detail page title
         const questionData = {
           slug,
-          title: item.title, // Use RSS title which has the actual question
+          title: item.title, // Use questions page title which has the actual question
           body_question: detail.body_question || null,
           body_answer: detail.body_answer || null,
           summary: detail.summary || null,
-          seo_title: item.title, // Use RSS title for SEO too
+          seo_title: item.title, // Use questions page title for SEO too
           seo_description: detail.seo_description || null,
           source_url: sourceUrl,
         };
